@@ -5,7 +5,8 @@
   </div>
 </template>
 
-<script lang="ts">
+<script lang="ts" type="modules">
+// 모듈로 선언하면 관련 디펜던시 스크립트 다 가져온다.
 import { defineComponent, toRef, ref, reactive, render } from "vue";
 import * as THREE from "three";
 
@@ -46,36 +47,47 @@ export default defineComponent({
   },
   // 렌더링 이후의 사이클
   mounted(): void {
+    const app = window.document.querySelector("#threejs");
+    const renderer = new THREE.WebGLRenderer();
+    app?.appendChild(renderer.domElement);
+
+    // 자바스크립트의 핵심 객체 : scene과 camera
     // 객체의 모임 : 3d모델을 구성하는 모든 객체의 부모
     const scene = new THREE.Scene();
     // 카메라 : 보이는 객체 따로 보이거나 같이 보이거나
+    // 원근카메라 생성
     const camera = new THREE.PerspectiveCamera(
-      75,
-      innerWidth / innerHeight,
-      0.1,
-      1000
+      75, // fov 필드오브뷰(시야각)
+      innerWidth / innerHeight, // 가로 세로 비율
+      0.1, // near 카메라가 찍는 공간의 범위 (가까운화면)
+      1000 // far 카메라가 찍는 공간의 범위 (먼화면)
     );
-    // 자바스크립트의 핵심 객체 : scene과 camera
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(innerWidth, innerHeight);
-    renderer.setPixelRatio(devicePixelRatio);
+    camera.position.z = 15;
 
-    const app = window.document.querySelector("#threejs");
-    app?.appendChild(renderer.domElement);
-
+    // 기하학 객체의 정점 데이터(재사용가능, 내장된 기본 데이터사용 가능)
     const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    // mesh의 도구(재사용가능, 표면의 속성 like texture- 랜더링된 이미지)
+    const material = new THREE.MeshPhongMaterial({ color: 0xbfd9d7 });
+    // 기하학 객체를 그리는 객체 (2번 그린다면 2개)
     const mesh = new THREE.Mesh(boxGeometry, material);
     scene.add(mesh);
 
-    camera.position.z = 5;
+    // 광원추가
+    const color = 0xffffff;
+    const intensity = 1;
+    const light = new THREE.DirectionalLight(color, intensity);
+    light.position.set(-1, 2, 4);
+    scene.add(light);
+
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(devicePixelRatio);
     renderer.render(scene, camera);
 
     function animate(): void {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
       mesh.rotation.x += 0.01;
-      mesh.rotation.y += 0.01;
+      mesh.rotation.y += 0.11;
       mesh.rotation.z += 0.01;
     }
     animate();
