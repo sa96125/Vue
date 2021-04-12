@@ -65,15 +65,17 @@ export default defineComponent({
     camera.position.z = 15;
 
     // 기하학 객체의 정점 데이터(재사용가능, 내장된 기본 데이터사용 가능)
-    const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const radius = 1;
+    const detail = 1;
+    const geometry = new THREE.IcosahedronGeometry(radius, detail);
     // mesh의 도구(재사용가능, 표면의 속성 like texture- 랜더링된 이미지)
     const material = new THREE.MeshPhongMaterial({ color: 0xbfd9d7 });
     // 기하학 객체를 그리는 객체 (2번 그린다면 2개)
-    const mesh = new THREE.Mesh(boxGeometry, material);
-    scene.add(mesh);
+    // const mesh = new THREE.Mesh(geometry, material);
+    // scene.add(mesh);
 
     // 광원추가
-    const color = 0xffffff;
+    const color = 0xfff2220;
     const intensity = 1;
     const light = new THREE.DirectionalLight(color, intensity);
     light.position.set(-1, 2, 4);
@@ -83,14 +85,55 @@ export default defineComponent({
     renderer.setPixelRatio(devicePixelRatio);
     renderer.render(scene, camera);
 
+    function makeInstance(geometry: any, color: number, x: number) {
+      const material = new THREE.MeshPhongMaterial({ color });
+      
+      const cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+      cube.position.x = x;
+      return cube;
+    }
+
+    const cubes = [
+      makeInstance(geometry, 0xbfd9d7, 0),
+      makeInstance(geometry, 0xbfd9d7, -2),
+      makeInstance(geometry, 0xbfd9d7, 2),
+      makeInstance(geometry, 0xbfd9d7, 4),
+      makeInstance(geometry, 0xbfd9d7, -4),
+    ];
+
+    animate();
+
+    function resizeRendererToDisplaySize(
+      renderer: THREE.WebGLRenderer
+    ): boolean {
+      const canvas = renderer.domElement;
+      const pixelRatio = window.devicePixelRatio;
+      const width = (canvas.clientWidth * pixelRatio) | 0;
+      const height = (canvas.clientHeight * pixelRatio) | 0;
+      const needResize = canvas.width !== width || canvas.height !== height;
+      if (needResize) {
+        renderer.setSize(width, height, false);
+      }
+      return needResize;
+    }
+
     function animate(): void {
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
-      mesh.rotation.x += 0.01;
-      mesh.rotation.y += 0.11;
-      mesh.rotation.z += 0.01;
+
+      if (resizeRendererToDisplaySize(renderer)) {
+        const canvas = renderer.domElement;
+        camera.aspect = canvas.clientWidth / canvas.clientHeight; //비율 맞추고
+        camera.updateProjectionMatrix(); // 창의 크기를 바꾸더라도 비율이 깨지지 않는다.
+      }
+
+      cubes.forEach((cube, ndx) => {
+        cube.rotation.x += 0.021 + ndx * 0.0003;
+        cube.rotation.y += 0.042 + ndx * 0.0021;
+        cube.position.z += 0.0005;
+      });
     }
-    animate();
   },
   methods: {},
 });
